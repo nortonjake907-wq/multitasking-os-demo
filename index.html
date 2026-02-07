@@ -1,0 +1,517 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Multi‑Tasking OS — Interactive Concepts Demo</title>
+  <meta name="description" content="Interactive website demonstrating multitasking, multiprogramming, time-sharing, multiprocessing, scheduling policies, context switching, and concurrency issues." />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <div class="brand">
+      <div class="brand__title">
+        <span class="brand__badge" aria-hidden="true">OS</span>
+        <h1>Multi‑Tasking Operating Systems</h1>
+      </div>
+      <p class="brand__subtitle">Editable workload + play/pause scheduling animation + cooperative vs preemptive + policy comparisons.</p>
+    </div>
+
+    <div class="header-actions">
+      <button id="themeToggle" class="btn btn--ghost" type="button" aria-pressed="false" title="Toggle dark mode">🌙 Dark</button>
+      <a class="btn btn--primary" href="#simulation">Open simulation</a>
+    </div>
+  </header>
+
+  <div class="layout">
+    <nav class="sidenav" aria-label="Site navigation">
+      <div class="sidenav__inner">
+        <h2 class="sidenav__title">Contents</h2>
+        <ul class="sidenav__list">
+          <li><a class="navlink" href="#overview">Overview</a></li>
+          <li><a class="navlink" href="#concepts">Core concepts</a></li>
+          <li><a class="navlink" href="#simulation">Interactive simulation</a></li>
+          <li><a class="navlink" href="#policycompare">Policy comparison</a></li>
+          <li><a class="navlink" href="#concurrency">Concurrency mini‑demos</a></li>
+          <li><a class="navlink" href="#glossary">Glossary</a></li>
+          <li><a class="navlink" href="#references">References</a></li>
+        </ul>
+
+        <div class="sidenav__callout">
+          <p class="muted">
+            Tip: Edit the workload, press <strong>Apply</strong>, then <strong>Play</strong>.
+            Watch processes move between <em>New → Ready → Running → Blocked → Done</em>.
+          </p>
+        </div>
+      </div>
+    </nav>
+
+    <main id="main" class="main">
+      <!-- ===================================================== -->
+      <section id="overview" class="section">
+        <header class="section__header">
+          <h2>Overview</h2>
+          <p class="muted">This site turns multitasking definitions into something you can see.</p>
+        </header>
+
+        <div class="grid grid--2">
+          <article class="card">
+            <h3>What you can learn here</h3>
+            <ul class="bullets">
+              <li>Why <strong>preemptive multitasking</strong> usually feels more responsive than non-preemptive switching.</li>
+              <li>How <strong>cooperative multitasking</strong> depends on tasks voluntarily yielding.</li>
+              <li>How tasks move through <strong>New / Ready / Running / Blocked / Done</strong> states.</li>
+              <li>How scheduling policies (FCFS, SJF, Priority, RR) change response time and completion order.</li>
+              <li>Why concurrency needs synchronization (race conditions) and how deadlocks happen.</li>
+            </ul>
+          </article>
+
+          <article class="card">
+            <h3>How to use the simulation</h3>
+            <ol class="steps">
+              <li>Edit the workload (processes, arrivals, priorities, CPU/I/O bursts).</li>
+              <li>Click <strong>Apply workload</strong>.</li>
+              <li>Choose a <strong>preset</strong> (Multiprogramming, Cooperative, Preemptive, Time‑sharing, Multiprocessing).</li>
+              <li>Press <strong>Play</strong> (or Step).</li>
+              <li>Watch the <strong>process movement animation</strong> and the live Gantt timeline.</li>
+            </ol>
+          </article>
+        </div>
+
+        <div class="callout">
+          <strong>Goal:</strong> explain “who runs next, and why does the OS switch?” with a visual schedule.
+        </div>
+      </section>
+
+      <!-- ===================================================== -->
+      <section id="concepts" class="section">
+        <header class="section__header">
+          <h2>Core concepts</h2>
+          <p class="muted">Quick explanations that match the simulator behavior.</p>
+        </header>
+
+        <div class="grid grid--3">
+          <article class="card">
+            <h3>Process states</h3>
+            <ul class="bullets">
+              <li><strong>New</strong>: not yet arrived (arrival time is in the future).</li>
+              <li><strong>Ready</strong>: can run, waiting for CPU.</li>
+              <li><strong>Running</strong>: executing on a CPU core.</li>
+              <li><strong>Blocked</strong>: waiting for I/O to finish.</li>
+              <li><strong>Done</strong>: finished execution.</li>
+            </ul>
+          </article>
+
+          <article class="card">
+            <h3>Cooperative vs preemptive</h3>
+            <p>
+              In <strong>preemptive</strong> systems, a timer can interrupt a task after a <strong>time quantum</strong>.
+              In <strong>cooperative</strong> systems, the OS depends on tasks to <em>yield</em>—if they don’t, the system can become unresponsive.
+            </p>
+          </article>
+
+          <article class="card">
+            <h3>Concurrency vs parallelism</h3>
+            <p>
+              <strong>Concurrency</strong> is “taking turns” over time (even with one CPU).
+              <strong>Parallelism</strong> is literal simultaneous execution using multiple cores.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <!-- ===================================================== -->
+      <section id="simulation" class="section">
+        <header class="section__header">
+          <h2>Interactive scheduling simulation</h2>
+          <p class="muted">Editable workload + play/pause + cooperative vs preemptive + process movement animation.</p>
+        </header>
+
+        <div class="grid grid--2">
+          <!-- Workload Editor -->
+          <article class="card">
+            <h3>1) Workload editor</h3>
+            <p class="muted">
+              Define processes using a burst string like <code>CPU10 IO40 CPU10</code>.
+              CPU/IO values are in seconds.
+            </p>
+
+            <div class="table-wrap">
+              <table class="table table--compact" id="workloadTable" aria-label="Workload editor table">
+                <thead>
+                  <tr>
+                    <th style="width: 110px;">Label</th>
+                    <th style="width: 110px;">Arrival</th>
+                    <th style="width: 110px;">Priority</th>
+                    <th>Burst sequence</th>
+                    <th style="width: 70px;">Remove</th>
+                  </tr>
+                </thead>
+                <tbody id="workloadBody"></tbody>
+              </table>
+            </div>
+
+            <div class="actions">
+              <button id="addProcBtn" class="btn btn--ghost" type="button">+ Add process</button>
+              <button id="loadReportBtn" class="btn btn--ghost" type="button">Load report example</button>
+              <button id="applyWorkloadBtn" class="btn btn--primary" type="button">Apply workload</button>
+            </div>
+
+            <p id="workloadError" class="error" role="alert" aria-live="polite"></p>
+
+            <details class="details">
+              <summary><strong>Burst string rules</strong></summary>
+              <ul class="bullets">
+                <li>Use tokens separated by spaces: <code>CPU&lt;s&gt;</code>, <code>IO&lt;s&gt;</code>.</li>
+                <li>Example: <code>CPU80</code> or <code>CPU10 IO40 CPU10</code>.</li>
+                <li>Bursts must start with CPU (a process must run before it can do I/O).</li>
+                <li><em>Optional:</em> add <code>YIELD</code> to represent a voluntary yield point (cooperative behavior).</li>
+              </ul>
+            </details>
+          </article>
+
+          <!-- Controls -->
+          <article class="card">
+            <h3>2) Simulation controls</h3>
+
+            <div class="control">
+              <label for="presetSelect">Preset (concept mode)</label>
+              <select id="presetSelect">
+                <option value="report" selected>Report default (preemptive multitasking + priority)</option>
+                <option value="multiprogramming">Multiprogramming (batch-style, non-preemptive)</option>
+                <option value="cooperative">Cooperative multitasking (yield-based)</option>
+                <option value="preemptive">Preemptive multitasking (timer-based)</option>
+                <option value="timesharing">Time-sharing (Round Robin)</option>
+                <option value="multiprocessing">Multiprocessing (2 cores)</option>
+              </select>
+              <p class="hint">Presets set recommended options. You can still tweak them.</p>
+            </div>
+
+            <div class="grid grid--2">
+              <div class="control">
+                <label for="policySelect">Scheduling policy</label>
+                <select id="policySelect">
+                  <option value="fcfs">FCFS</option>
+                  <option value="sjf">SJF</option>
+                  <option value="priority" selected>Priority</option>
+                  <option value="rr">Round Robin (RR)</option>
+                </select>
+              </div>
+
+              <div class="control">
+                <label for="modeSelect">Switching style</label>
+                <select id="modeSelect">
+                  <option value="none">Non-preemptive</option>
+                  <option value="coop">Cooperative (yield)</option>
+                  <option value="preemptive" selected>Preemptive (timer)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="grid grid--2">
+              <div class="control">
+                <label for="coresInput">CPU cores</label>
+                <input id="coresInput" type="number" min="1" max="8" step="1" value="1" />
+              </div>
+
+              <div class="control">
+                <label for="quantumInput">Time quantum (s)</label>
+                <input id="quantumInput" type="number" min="1" max="500" step="1" value="20" />
+                <p class="hint">Used for preemptive/RR. Smaller quantum → more switching.</p>
+              </div>
+            </div>
+
+            <div class="control">
+              <label for="coopYieldInput">Cooperative yield interval (s)</label>
+              <input id="coopYieldInput" type="number" min="0" max="500" step="1" value="20" />
+              <p class="hint">Only used in cooperative mode. 0 = never yields (can monopolize CPU).</p>
+            </div>
+
+            <div class="control-inline">
+              <label>
+                <input type="checkbox" id="priorityPreemptToggle" checked />
+                Allow higher-priority tasks to preempt running tasks (priority preemption)
+              </label>
+            </div>
+
+            <div class="actions">
+              <button id="playBtn" class="btn btn--primary" type="button">Play</button>
+              <button id="pauseBtn" class="btn btn--ghost" type="button" disabled>Pause</button>
+              <button id="stepBtn" class="btn btn--ghost" type="button">Step</button>
+              <button id="resetSimBtn" class="btn btn--ghost" type="button">Reset</button>
+              <button id="runToEndBtn" class="btn btn--ghost" type="button">Run to end</button>
+            </div>
+
+            <div class="grid grid--2">
+              <div class="control">
+                <label for="speedInput">Animation speed</label>
+                <input id="speedInput" type="range" min="1" max="25" value="6" />
+                <p class="hint">Current: <span id="speedLabel">6×</span></p>
+              </div>
+
+              <div class="statbox">
+                <div class="statbox__label">Simulated time</div>
+                <div class="statbox__value"><span id="timeNow">0</span> s</div>
+              </div>
+            </div>
+
+            <div id="modelExplanation" class="mini">
+              <!-- Filled by JS -->
+            </div>
+          </article>
+        </div>
+
+        <!-- Process movement -->
+        <article class="card">
+          <h3>3) Animation: how processes move</h3>
+          <p class="muted">
+            As the simulation runs, processes move between queues. Arrival times matter: a process stays in <strong>New</strong> until its arrival time.
+          </p>
+
+          <div class="queues" aria-label="Process state queues">
+            <div class="queue-box">
+              <div class="queue-title">New (not arrived)</div>
+              <div class="queue-body" id="qNew" aria-label="New queue"></div>
+            </div>
+
+            <div class="queue-box">
+              <div class="queue-title">Ready</div>
+              <div class="queue-body" id="qReady" aria-label="Ready queue"></div>
+            </div>
+
+            <div class="queue-box">
+              <div class="queue-title">Running</div>
+              <div class="queue-body queue-body--running" id="qRunning" aria-label="Running cores">
+                <!-- cores inserted by JS -->
+              </div>
+            </div>
+
+            <div class="queue-box">
+              <div class="queue-title">Blocked (I/O)</div>
+              <div class="queue-body" id="qBlocked" aria-label="Blocked queue"></div>
+            </div>
+
+            <div class="queue-box">
+              <div class="queue-title">Done</div>
+              <div class="queue-body" id="qDone" aria-label="Done queue"></div>
+            </div>
+          </div>
+
+          <div class="mini muted" id="queueHint"></div>
+        </article>
+
+        <!-- Live Gantt -->
+        <article class="card">
+          <h3>4) Live Gantt timeline</h3>
+          <p class="muted">Segments grow while the simulation runs. Hover segments for details.</p>
+
+          <div class="legend" aria-label="Legend">
+            <span class="legend__item"><span class="swatch swatch--a" aria-hidden="true"></span> CPU segment</span>
+            <span class="legend__item"><span class="swatch swatch--idle" aria-hidden="true"></span> Idle</span>
+          </div>
+
+          <div class="gantt-stream" id="ganttStream" aria-label="Live Gantt timeline"></div>
+        </article>
+
+        <div class="grid grid--2">
+          <article class="card">
+            <h3>Metrics</h3>
+            <ul id="metricsList" class="bullets"></ul>
+          </article>
+
+          <article class="card">
+            <h3>Switch log (what ran when, and why)</h3>
+            <div class="table-wrap" id="switchLogWrap"></div>
+          </article>
+        </div>
+      </section>
+
+      <!-- ===================================================== -->
+      <section id="policycompare" class="section">
+        <header class="section__header">
+          <h2>Policy comparison</h2>
+          <p class="muted">Pick a scheduling policy from a dropdown so the comparison is easier to read.</p>
+        </header>
+
+        <article class="card">
+          <div class="grid grid--2">
+            <div>
+              <h3 style="margin-top:0;">Compare policies (one at a time)</h3>
+              <p class="muted">
+                This comparison uses a <strong>single CPU core</strong> and typical forms of each policy:
+                FCFS/SJF (non-preemptive), Priority (preemptive), and RR (preemptive).
+              </p>
+
+              <div class="control">
+                <label for="comparePolicySelect">View policy</label>
+                <select id="comparePolicySelect">
+                  <option value="fcfs">FCFS (First‑Come, First‑Served)</option>
+                  <option value="sjf">SJF (Shortest Job First)</option>
+                  <option value="priority">Priority (Preemptive)</option>
+                  <option value="rr" selected>Round Robin (RR)</option>
+                </select>
+                <p class="hint">Choose one policy to display, then click <strong>Refresh comparison</strong> after changing the workload.</p>
+              </div>
+
+              <div class="actions">
+                <button id="refreshCompareBtn" class="btn btn--primary" type="button">Refresh comparison</button>
+              </div>
+            </div>
+            <div class="callout">
+              <strong>What to look for:</strong>
+              <ul class="bullets">
+                <li><strong>Response time</strong> for interactive processes (e.g., P_C arrivals).</li>
+                <li><strong>Makespan</strong> (when everything finishes).</li>
+                <li><strong>Fairness</strong>: do shorter tasks finish quickly? do long tasks starve?</li>
+              </ul>
+            </div>
+          </div>
+
+          <div id="compareSingle" class="compare-single" aria-label="Selected policy comparison"></div>
+        </article>
+      </section>
+
+      <!-- ===================================================== -->
+      <section id="concurrency" class="section">
+        <header class="section__header">
+          <h2>Concurrency mini‑demos</h2>
+          <p class="muted">Multitasking makes concurrency common — these show classic problems and fixes.</p>
+        </header>
+
+        <div class="grid grid--2">
+          <article class="card">
+            <h3>Race condition: <code>counter = counter + 1</code></h3>
+            <p class="muted">Two threads increment the same variable. Without a lock, interleaving can cause a “lost update”.</p>
+
+            <div class="control-inline">
+              <label><input type="checkbox" id="raceLockToggle" /> Use lock (mutex)</label>
+            </div>
+
+            <div class="demo">
+              <div class="demo__row">
+                <div class="pill">Counter: <span id="raceCounter">0</span></div>
+                <div class="pill">Step: <span id="raceStep">0</span>/6</div>
+              </div>
+              <div class="demo__grid">
+                <div>
+                  <h4>Thread A</h4>
+                  <pre id="raceA" class="codebox"></pre>
+                </div>
+                <div>
+                  <h4>Thread B</h4>
+                  <pre id="raceB" class="codebox"></pre>
+                </div>
+              </div>
+              <div class="actions">
+                <button class="btn btn--primary" id="raceStepBtn" type="button">Step</button>
+                <button class="btn btn--ghost" id="raceResetBtn" type="button">Reset</button>
+              </div>
+              <p id="raceNote" class="mini"></p>
+            </div>
+          </article>
+
+          <article class="card">
+            <h3>Deadlock: two locks, two processes</h3>
+            <p class="muted">P1 holds L1 and waits for L2, while P2 holds L2 and waits for L1 → nobody can proceed.</p>
+
+            <div class="control-inline">
+              <label><input type="checkbox" id="deadlockPreventToggle" /> Prevent deadlock (lock ordering)</label>
+            </div>
+
+            <div class="demo">
+              <div class="demo__row">
+                <div class="pill">Step: <span id="deadStep">0</span>/4</div>
+                <div class="pill">Status: <span id="deadStatus">Ready</span></div>
+              </div>
+
+              <div class="demo__grid">
+                <div>
+                  <h4>Locks</h4>
+                  <pre id="deadLocks" class="codebox"></pre>
+                </div>
+                <div>
+                  <h4>Processes</h4>
+                  <pre id="deadProcs" class="codebox"></pre>
+                </div>
+              </div>
+
+              <div class="actions">
+                <button class="btn btn--primary" id="deadStepBtn" type="button">Step</button>
+                <button class="btn btn--ghost" id="deadResetBtn" type="button">Reset</button>
+              </div>
+
+              <p id="deadNote" class="mini"></p>
+            </div>
+          </article>
+        </div>
+
+        <div class="callout">
+          <strong>Connection to multitasking:</strong> when tasks run concurrently, the timing of operations can change outcomes.
+          Synchronization tools and safe design patterns help prevent races and deadlocks.
+        </div>
+      </section>
+
+      <!-- ===================================================== -->
+      <section id="glossary" class="section">
+        <header class="section__header">
+          <h2>Glossary</h2>
+          <p class="muted">Fast definitions you can cross-check while using the simulation.</p>
+        </header>
+
+        <div class="grid grid--2">
+          <article class="card">
+            <h3>Scheduling</h3>
+            <dl class="glossary">
+              <dt>Time quantum</dt>
+              <dd>Fixed CPU time given to a runnable task before the OS may switch to another (preemptive systems).</dd>
+              <dt>Preemption</dt>
+              <dd>OS interrupts a running task to schedule another.</dd>
+              <dt>Cooperative yield</dt>
+              <dd>A task voluntarily gives up the CPU so others can run.</dd>
+              <dt>Context switch</dt>
+              <dd>Saving one task’s state and restoring another’s state.</dd>
+            </dl>
+          </article>
+
+          <article class="card">
+            <h3>Concurrency</h3>
+            <dl class="glossary">
+              <dt>Race condition</dt>
+              <dd>A result depends on timing/interleaving of concurrent operations.</dd>
+              <dt>Deadlock</dt>
+              <dd>Tasks are stuck waiting for each other in a cycle.</dd>
+              <dt>Starvation</dt>
+              <dd>A task waits a long time because others keep getting scheduled.</dd>
+            </dl>
+          </article>
+        </div>
+      </section>
+
+      <!-- ===================================================== -->
+      <section id="references" class="section">
+        <header class="section__header">
+          <h2>References</h2>
+          <p class="muted">This website is built to demonstrate the concepts from your report.</p>
+        </header>
+
+        <article class="card">
+          <h3>Report-based examples</h3>
+          <p>
+            The default workload (P<sub>A</sub>, P<sub>B</sub>, P<sub>C</sub>) and the comparison goals match the examples in your report.
+          </p>
+          <p class="mini muted">Keep the PDF report and use this website as the interactive companion.</p>
+        </article>
+      </section>
+
+      <footer class="footer">
+        <p class="muted">
+          Iteration 1/4: Running queue updates every tick, time shown in seconds, and Gantt/policy timelines are less compressed with visible process labels.</p>
+      </footer>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
